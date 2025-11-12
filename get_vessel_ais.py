@@ -3,8 +3,8 @@ import os
 
 import polars as pl
 
-from get_data import ais_storage_loc, get_storage_fname
-from vessel_mmsi import mmsi_from_name, name_from_mmsi
+from get_data import get_storage_fname, download_ais_data
+from vessel_mmsi import name_from_mmsi
 
 
 def extract_vessel_ais(mmsi: int, start_date: str, end_date: str | None = None) -> None:
@@ -27,5 +27,11 @@ def extract_vessel_ais(mmsi: int, start_date: str, end_date: str | None = None) 
 
 if __name__ == '__main__':
     for mmsi in name_from_mmsi.keys():
-        extract_vessel_ais(mmsi, '2025-06-09')
-        print(f'Extracted AIS data for {name_from_mmsi[mmsi]}')
+        start_date = '2025-06-10'
+        try:
+            extract_vessel_ais(mmsi, start_date)
+            print(f'Extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
+        except FileNotFoundError:
+            download_ais_data(start_date)
+            extract_vessel_ais(mmsi, start_date)
+            print(f'Downloaded and extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
