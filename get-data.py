@@ -18,7 +18,7 @@ def get_ais_url(date: str) -> str:
     """
     year = date.split('-')[0]
     fname = f'ais-{date}.csv.zst'
-    return os.path.join(base_url, year, fname)
+    return '/'.join([base_url, year, fname])
 
 
 def get_storage_fname(date: str) -> str:
@@ -33,10 +33,17 @@ def download_ais_data(date: str) -> None:
     ais_url = get_ais_url(date)
     resp = urllib3.request('GET', ais_url, preload_content=False,
                            headers={'User-Agent': 'Customer User Agent If Needed'})
-
-    with open(get_storage_fname(date), 'wb') as f:
+    fname = get_storage_fname(date)
+    print(f'>>> Downloading AIS data from {ais_url} to {fname}')
+    with open(fname, 'wb') as f:
         for chunk in resp.stream(65536):
             f.write(chunk)
+            print('.')
 
     resp.release_conn()
-    
+    print(f'||| Downloaded AIS data from {ais_url} to {fname}')
+
+
+if __name__ == '__main__':
+    date = '2025-06-03'
+    download_ais_data(date)
