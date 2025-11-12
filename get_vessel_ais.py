@@ -7,6 +7,8 @@ import polars as pl
 from get_data import get_storage_fname, download_ais_data
 from vessel_mmsi import name_from_mmsi
 
+vessel_ais_storage_loc = os.path.join(os.getcwd(), 'vessel_ais_data')
+
 
 def extract_vessel_ais(mmsi: int, start_date: datetime | str, end_date: datetime | str | None = None) -> None:
     """Extract the AIS data for the given vessel and store to csv named for the date and vessel name
@@ -49,12 +51,12 @@ def extract_vessel_ais(mmsi: int, start_date: datetime | str, end_date: datetime
         df_list.append(df)
     df_combined = pl.concat(df_list, how="vertical")
     df_sorted = df_combined.sort("base_date_time")
-    df_sorted.write_csv(os.path.join(os.path.curdir, vessel_ais_fname))
+    df_sorted.write_csv(os.path.join(vessel_ais_storage_loc, vessel_ais_fname))
 
 
 if __name__ == '__main__':
     for mmsi in name_from_mmsi.keys():
         extract_vessel_ais(mmsi,
                            datetime.fromisoformat('2025-06-10'),
-                           datetime.fromisoformat('2025-06-11'))
+                           datetime.fromisoformat('2025-06-10'))
 

@@ -5,7 +5,7 @@ import urllib3
 
 
 base_url = 'https://coast.noaa.gov/htdata/CMSP/AISDataHandler'
-ais_storage_loc = os.path.join(os.getcwd(), 'ais_data')
+ais_storage_loc = os.path.join(os.getcwd(), 'all_ais_data')
 
 
 def get_ais_url(date: str) -> str:
