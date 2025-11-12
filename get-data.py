@@ -33,17 +33,29 @@ def download_ais_data(date: str) -> None:
     ais_url = get_ais_url(date)
     resp = urllib3.request('GET', ais_url, preload_content=False,
                            headers={'User-Agent': 'Customer User Agent If Needed'})
+    chunk_size = 65536
+    size = int(resp.headers['Content-Length'])
+    total_chunks = int(size / chunk_size)
     fname = get_storage_fname(date)
-    print(f'>>> Downloading AIS data from {ais_url} to {fname}')
-    with open(fname, 'wb') as f:
-        for chunk in resp.stream(65536):
-            f.write(chunk)
-            print('.')
+    if os.path.isfile(fname):
+        print(f'--- AIS data already downloaded from {ais_url}')
+    else:
+        print(f'>>> Downloading {size} of AIS data from {ais_url} to {fname}')
+        with open(fname, 'wb') as f:
+            numchunks = 0
+            i = 9
+            for chunk in resp.stream(chunk_size):
+                f.write(chunk)
+                numchunks += 1
+                if numchunks >= total_chunks/10:
+                    print(i, end='', flush=True)
+                    numchunks = 0
+                    i -= 1
 
-    resp.release_conn()
-    print(f'||| Downloaded AIS data from {ais_url} to {fname}')
+        resp.release_conn()
+        print(f'\n||| Downloaded AIS data from {ais_url} to {fname}')
 
 
 if __name__ == '__main__':
-    date = '2025-06-03'
+    date = '2025-06-05'
     download_ais_data(date)
