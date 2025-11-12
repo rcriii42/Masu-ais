@@ -57,5 +57,5 @@ def download_ais_data(date: str) -> None:
 
 
 if __name__ == '__main__':
-    date = '2025-06-05'
+    date = '2025-06-08'
     download_ais_data(date)
