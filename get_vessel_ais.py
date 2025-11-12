@@ -8,6 +8,9 @@ from get_data import get_storage_fname, download_ais_data
 from vessel_mmsi import name_from_mmsi
 
 vessel_ais_storage_loc = os.path.join(os.getcwd(), 'vessel_ais_data')
+if not os.path.exists(vessel_ais_storage_loc):
+    print(f'{vessel_ais_storage_loc} not found. Creating it.')
+    os.makedirs(vessel_ais_storage_loc)
 
 
 def extract_vessel_ais(mmsi: int, start_date: datetime | str, end_date: datetime | str | None = None) -> None:
