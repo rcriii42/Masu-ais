@@ -14,24 +14,25 @@ def extract_vessel_ais(mmsi: int, start_date: str, end_date: str | None = None) 
     start_date: the start date for the data extraction
     end_date: the end date for the data extraction
     """
-    vessel_name = name_from_mmsi[mmsi]
+    vessel_name = name_from_mmsi[mmsi].replace(' ', '_')
     all_ais_fname = get_storage_fname(start_date)
     if end_date is None:
         end_str = ''
     else:
         end_str = f'_to_{end_date}'
     vessel_ais_fname = os.path.join(os.path.curdir, f'{vessel_name}_{start_date}{end_str}_ais.csv')
-    df = pl.scan_csv(all_ais_fname).filter(pl.col("mmsi") == mmsi).collect()
+    try:
+        df = pl.scan_csv(all_ais_fname).filter(pl.col("mmsi") == mmsi).collect()
+        print(f'Extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
+    except FileNotFoundError:
+        download_ais_data(start_date)
+        df = pl.scan_csv(all_ais_fname).filter(pl.col("mmsi") == mmsi).collect()
+        print(f'Downloaded and extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
     df.write_csv(vessel_ais_fname)
 
 
 if __name__ == '__main__':
     for mmsi in name_from_mmsi.keys():
-        start_date = '2025-06-10'
-        try:
-            extract_vessel_ais(mmsi, start_date)
-            print(f'Extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
-        except FileNotFoundError:
-            download_ais_data(start_date)
-            extract_vessel_ais(mmsi, start_date)
-            print(f'Downloaded and extracted AIS data for {name_from_mmsi[mmsi]} on {start_date}')
+        start_date = '2025-06-11'
+        extract_vessel_ais(mmsi, start_date)
+
