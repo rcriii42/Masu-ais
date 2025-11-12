@@ -16,5 +16,6 @@ htmlcov/
 .pydevproject
 .idea/
 
-ais_data/
+all_ais_data/
+vessel_ais_data/
 *.csv
