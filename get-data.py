@@ -5,7 +5,7 @@ import urllib3
 
 
 base_url = 'https://coast.noaa.gov/htdata/CMSP/AISDataHandler'
-storage_loc = os.path.join(os.getcwd(), 'ais_data')
+ais_storage_loc = os.path.join(os.getcwd(), 'ais_data')
 
 
 def get_ais_url(date: str) -> str:
@@ -23,7 +23,7 @@ def get_ais_url(date: str) -> str:
 
 def get_storage_fname(date: str) -> str:
     """Return the storage filename including path for the given date"""
-    return os.path.join(storage_loc, f'ais-{date}.csv.zst')
+    return os.path.join(ais_storage_loc, f'ais-{date}.csv.zst')
 
 
 def download_ais_data(date: str) -> None:
