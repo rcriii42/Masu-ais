@@ -14,14 +14,12 @@ if not os.path.exists(vessel_ais_storage_loc):
 
 
 def extract_vessel_ais(mmsi: int | list[int] | None,
-                       start_date: datetime | str, end_date: datetime | str | None = None,
-                       mmsi_index: int = 2) -> None:
+                       start_date: datetime | str, end_date: datetime | str | None = None) -> None:
     """Extract the AIS data for the given vessel and store to csv named for the date and vessel name
 
     mmsi: the mmsi number for the vessel
     start_date: the start date for the data extraction
     end_date: the end date for the data extraction
-    mmsi_index: The column number of the mmsi in the data
     """
     if type(start_date) is str:
         start_date_dt = datetime.strptime(start_date, '%Y-%m-%d')
