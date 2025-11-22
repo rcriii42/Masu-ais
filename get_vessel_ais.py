@@ -4,7 +4,7 @@ import os
 
 import polars as pl
 
-from get_data import get_storage_fname, download_ais_data
+from get_data_from_noaa import get_storage_fname, download_ais_data
 from vessel_mmsi import name_from_mmsi
 
 vessel_ais_storage_loc = os.path.join(os.getcwd(), 'vessel_ais_data')
