@@ -11,7 +11,8 @@ COURSE  => cog
 timeStamp => utc_timestamp_ms
 """
 
-import datetime
+from datetime import datetime, timezone
+import glob
 import os
 import sqlite3
 
@@ -43,7 +44,7 @@ def load_port_data_to_db(port_data_fname: str, ais_database_fname: str):
         return
     else:
         cursor.execute("INSERT INTO uploaded_files (filename, upload_date, file_id) VALUES (?, ?, ?)",
-                       (port_data_fname, datetime.datetime.now(), None))
+                       (port_data_fname, datetime.now(), None))
         connection.commit()
         cursor.execute("SELECT last_insert_rowid()")
         rows = cursor.fetchall()
@@ -65,4 +66,19 @@ def load_port_data_to_db(port_data_fname: str, ais_database_fname: str):
 
 
 if __name__ == '__main__':
-    load_port_data_to_db('202506-0.csv', ais_database)
+    connection = sqlite3.connect(ais_database)
+    cursor = connection.cursor()
+    for fname in sorted(glob.glob(os.path.join(port_data_loc, "*.csv"))):
+        print(f'------------ Loading ais data from {fname} --------------------')
+        load_port_data_to_db(fname, ais_database)
+        file_id = cursor.execute("SELECT file_id FROM uploaded_files WHERE filename=?",
+                                 (fname, )).fetchone()[0]
+        ais_df = pd.read_sql(f'SELECT * FROM ais_data WHERE file_id={file_id}', con=connection,)
+        start_date = datetime.fromtimestamp(ais_df.utc_timestamp_ms.min()/1000, timezone.utc)
+        end_date = datetime.fromtimestamp(ais_df.utc_timestamp_ms.max()/1000, timezone.utc)
+        mmsi_list = ais_df.mmsi.unique()
+
+        print(f'AIS data in {fname}: {ais_df.shape} Spanning {start_date} to {end_date}, including vessels:')
+        for mmsi in mmsi_list:
+            vessel_data = cursor.execute(f'SELECT * FROM vessel_data WHERE mmsi={mmsi}').fetchall()
+            print(vessel_data)
