@@ -14,14 +14,19 @@ from shapely.geometry import Polygon, LineString
 # and disposal areas ("disp_*.csv")
 project_folder = os.path.join(os.getcwd(), 'W912HY24B0007')
 
-
 # Temporarily put any dredge tracks (from Marine Traffic) that you want to show on the map in gray
 names_tracks = []  # ['Break of Dawn 20230509']
 coords_tracks = []  # ['Break_of_Dawn_positions_Export_2023-05-09.csv'
 
-# Manually including coordinate files TODO: Just grab all the coord files in the directory
-geo_input = {'name':       ['CL HSC',     'CL BSC',     'CL BCC'],
-             'coord_file': ['cl_HSC.csv', 'cl_BSC.csv', 'cl_BCC.csv'],
+names=[]
+coord_files = []
+
+for fname in glob(os.path.join(project_folder, '*.csv')):
+    coord_files.append(fname)
+    names.append(os.path.splitext(os.path.basename(fname))[0])
+
+geo_input = {'name':       names,  # ['CL HSC',     'CL BSC',     'CL BCC'],
+             'coord_file': coord_files,  # ['cl_HSC.csv', 'cl_BSC.csv', 'cl_BCC.csv'],
              'geometry':   [],
              'color':      [],
              'stations':   [],
@@ -37,11 +42,11 @@ for name, fname in zip(geo_input['name'], geo_input['coord_file']):
         print(f'WARNING File type not recognized for file {fname}, removing from the project files')
         geo_input['name'].remove(name)
         geo_input['coord_file'].remove(fname)
-    if fname[:2] == 'cl':       # Channel centerline
+    if 'cl_' in fname:       # Channel centerline
         geo_input['geometry'].append(LineString(list(zip(coords.E, coords.N))))
         geo_input['stations'].append(list(coords.Station))
         geo_input['color'].append('black')
-    elif fname[:4] == 'disp':   # Disposal area
+    elif 'disp_' in fname or 'dig_' in fname:   # Dig or Disposal area
         if '.csv' in fname:
             geo_input['geometry'].append(LineString(list(zip(coords.E, coords.N))))
         else:
