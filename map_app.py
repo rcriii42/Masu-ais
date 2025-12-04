@@ -5,30 +5,35 @@ import numpy as np
 import plotly.graph_objects as go
 import shapely.geometry
 
-from channel_def import channel_sections as geo_df
+from channel_def import project_sections, colors
 
 fig = go.Figure()
-for feature, name in zip(geo_df.geometry, geo_df.name):
-    lats = []
-    lons = []
-    names = []
-    if isinstance(feature, shapely.geometry.linestring.LineString):
-        linestrings = [feature]
-    elif isinstance(feature, shapely.geometry.multilinestring.MultiLineString):
-        linestrings = feature.geoms
-    else:
-        continue
-    for linestring in linestrings:
-        x, y = linestring.xy
-        lats = np.append(lats, y)
-        lons = np.append(lons, x)
-        names = np.append(names, [name]*len(y))
+for feature_type in colors.keys():
+    geo_df = project_sections[feature_type]
+    for feature, name in zip(geo_df.geometry, geo_df.name):
+        lats = []
+        lons = []
+        names = []
+        if isinstance(feature, shapely.geometry.linestring.LineString):
+            linestrings = [feature]
+        elif isinstance(feature, shapely.geometry.multilinestring.MultiLineString):
+            linestrings = feature.geoms
+        else:
+            continue
+        for linestring in linestrings:
+            x, y = linestring.xy
+            lats = np.append(lats, y)
+            lons = np.append(lons, x)
+            names = np.append(names, [name]*len(y))
 
-        fig.add_trace(go.Scattermap(mode="markers+lines",
-                                    lat=lats,
-                                    lon=lons,
-                                    marker=None,
-                                    name=names[0]))
+            fig.add_trace(go.Scattermap(mode="markers+lines",
+                                        lat=lats,
+                                        lon=lons,
+                                        marker=None,
+                                        name=names[0],
+                                        line=dict(color=colors[feature_type])
+                                        )
+                          )
 
 fig.update_layout(title_text='HSC Maintenance',
                   showlegend=True,

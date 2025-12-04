@@ -1,13 +1,12 @@
 """
 channel_def.py - Define the channel shapes
 """
-from dataclasses import dataclass
 from glob import glob
 import os.path
 
 import geopandas
 import pandas
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import LineString
 
 # The folder with project specific coordinate files
 # Includes csv files with N, E coordinates of channel centerlines ("cl_*.csv"), dig areas ("dig_*.csv"),
@@ -21,54 +20,61 @@ coords_tracks = []  # ['Break_of_Dawn_positions_Export_2023-05-09.csv'
 names = []
 coord_files = []
 
+# The keys of the colors dict are the allowed shape types to display
+# Coord files must have 'key_' in the filename, or they will be ignored
+colors = {'cl': 'black',
+          'dig': 'green',
+          'disp': 'magenta',
+          'track': 'gray'}
+
 for fname in glob(os.path.join(project_folder, '*.csv')):
     coord_files.append(fname)
     names.append(os.path.splitext(os.path.basename(fname))[0])
 
-geo_input = {'name':       names,  # ['CL HSC',     'CL BSC',     'CL BCC'],
-             'coord_file': coord_files,  # ['cl_HSC.csv', 'cl_BSC.csv', 'cl_BCC.csv'],
-             'geometry':   [],
-             'color':      [],
-             'stations':   [],
-             }
+geo_inputs = {}
+for s in colors.keys():
+    geo_inputs[s] = {'name':       [],  # ['CL HSC',     'CL BSC',     'CL BCC'],
+                     'coord_file': [],  # ['cl_HSC.csv', 'cl_BSC.csv', 'cl_BCC.csv'],
+                     'geometry':   [],
+                     'color':      [],
+                     'stations':   [],
+                     }
 
-for name, fname in zip(geo_input['name'], geo_input['coord_file']):
+
+for name, fname in zip(names, coord_files):
     if '.csv' in fname:
         coords = pandas.read_csv(os.path.join(project_folder, fname))
+        geom = LineString(list(zip(coords.E, coords.N)))
     elif '.dxf' in fname:
         dxf_gdf = geopandas.read_file(os.path.join(project_folder, fname))
-        print(dxf_gdf)
+        geom = dxf_gdf.geometry
     else:
         print(f'WARNING File type not recognized for file {fname}, removing from the project files')
-        geo_input['name'].remove(name)
-        geo_input['coord_file'].remove(fname)
-    if 'cl_' in fname:       # Channel centerline
-        geo_input['geometry'].append(LineString(list(zip(coords.E, coords.N))))
-        geo_input['stations'].append(list(coords.Station))
-        geo_input['color'].append('black')
-    elif 'disp_' in fname or 'dig_' in fname:   # Dig or Disposal area
-        if '.csv' in fname:
-            geo_input['geometry'].append(LineString(list(zip(coords.E, coords.N))))
-        else:
-            geo_input['geometry'].append(dxf_gdf.geometry)
-        geo_input['stations'].append(None)
-        geo_input['color'].append('magenta')
-    elif 'positions_Export' in fname:  # Marine Traffic position export
-        # Marine traffic gives lat/long, so we have to convert it to (E, N) for the agent creation
-        track = geopandas.geodataframe.GeoDataFrame(coords,
-                                                    geometry=geopandas.points_from_xy(coords.Longitude, coords.Latitude,
-                                                                         crs="EPSG:4326"),
-                                                    crs="EPSG:4326")
-        track.to_crs(epsg=2278, inplace=True)
-        geo_input['geometry'].append(LineString(track.geometry.to_list()))
-        geo_input['stations'].append(None)
-        geo_input['color'].append('gray')  # Show tracks in gray
-    else:                       # Red/Green side dig areas
-        geo_input['geometry'].append(Polygon(list(zip(coords.E, coords.N))))
-        geo_input['stations'].append(None)
-        geo_input['color'].append(fname.split('_')[0])  # assume that the first word of the filename is the color
+        continue
+    ftype = os.path.basename(fname).split('_')[0]
+    if ftype not in colors.keys():
+        print(f'WARNING Feature type not recognized for file {fname}, removing from the project files')
+        continue
+    geo_inputs[ftype]['name'].append(name)
+    geo_inputs[ftype]['coord_file'].append(fname)
+    geo_inputs[ftype]['geometry'].append(geom)
+    geo_inputs[ftype]['color'].append(colors[ftype])
+    if ftype == 'cl':
+        geo_inputs[ftype]['stations'].append(list(coords.Station))
+    else:
+        geo_inputs[ftype]['stations'].append(None)
+    # Keeping the following in case I need to know how to convert coord files that are in lat/long
+    # elif 'positions_Export' in fname:  # Marine Traffic position export
+    #     # Marine traffic gives lat/long, so we have to convert it to (E, N) for the agent creation
+    #     track = geopandas.geodataframe.GeoDataFrame(coords,
+    #                                                 geometry=geopandas.points_from_xy(coords.Longitude, coords.Latitude,
+    #                                                                                   crs="EPSG:4326"),
+    #                                                 crs="EPSG:4326")
+    #     track.to_crs(epsg=2278, inplace=True)
+    #     geo_input['geometry'].append(LineString(track.geometry.to_list()))
+    #     geo_input['stations'].append(None)
+    #     geo_input['color'].append('gray')  # Show tracks in gray
 
-
-channel_sections = geopandas.GeoDataFrame(geo_input, crs='epsg:2278').to_crs(epsg=4326)
-# channel_sections.set_crs(crs='epsg:2278', inplace=True)  # 2278 is the crs for HSC north/east
-# channel_sections.to_file("channel_sections.shp", engine="pyogrio")
+project_sections = {}
+for gtype in geo_inputs.keys():
+    project_sections[gtype] = geopandas.GeoDataFrame(geo_inputs[gtype], crs='epsg:2278').to_crs(epsg=4326)
