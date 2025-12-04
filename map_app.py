@@ -2,12 +2,10 @@
 
 from dash import Dash, dcc, html
 import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
 import shapely.geometry
 
 from channel_def import channel_sections as geo_df
-
 
 fig = go.Figure()
 for feature, name in zip(geo_df.geometry, geo_df.name):

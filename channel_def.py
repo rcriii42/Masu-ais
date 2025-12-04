@@ -18,7 +18,7 @@ project_folder = os.path.join(os.getcwd(), 'W912HY24B0007')
 names_tracks = []  # ['Break of Dawn 20230509']
 coords_tracks = []  # ['Break_of_Dawn_positions_Export_2023-05-09.csv'
 
-names=[]
+names = []
 coord_files = []
 
 for fname in glob(os.path.join(project_folder, '*.csv')):
