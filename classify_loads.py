@@ -89,6 +89,7 @@ if __name__ == "__main__":
     df = pd.read_sql(qry, connection)
     df['activity'] = None
     df['date'] = df.apply(lambda row: datetime.fromtimestamp(row.utc_timestamp_ms/1000), axis=1)
+    df.sort_values(by=['date'], ascending=True, inplace=True)
     df['duration'] = df['date'].diff()
     df.set_index('date', inplace=True)
     gdf = gpd.GeoDataFrame(df,
