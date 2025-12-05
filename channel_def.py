@@ -41,7 +41,7 @@ for s in colors.keys():
                      'stations':   [],
                      }
 
-
+removed: list[tuple[str:str]] = []
 for name, fname in zip(names, coord_files):
     if '.csv' in fname:
         coords = pandas.read_csv(os.path.join(project_folder, fname))
@@ -51,10 +51,12 @@ for name, fname in zip(names, coord_files):
         geom = dxf_gdf.geometry
     else:
         print(f'WARNING File type not recognized for file {fname}, removing from the project files')
+        removed.append((name, fname))
         continue
     ftype = os.path.basename(fname).split('_')[0]
     if ftype not in colors.keys():
         print(f'WARNING Feature type not recognized for file {fname}, removing from the project files')
+        removed.append((name, fname))
         continue
     geo_inputs[ftype]['name'].append(name)
     geo_inputs[ftype]['coord_file'].append(fname)
@@ -75,6 +77,14 @@ for name, fname in zip(names, coord_files):
     #     geo_input['geometry'].append(LineString(track.geometry.to_list()))
     #     geo_input['stations'].append(None)
     #     geo_input['color'].append('gray')  # Show tracks in gray
+
+for name, fname in removed:
+    names.pop(name)
+    coord_files.pop(fname)
+print('Loaded the following files:')
+for fname in coord_files:
+    print(fname)
+print()
 
 project_sections = {}
 for gtype in geo_inputs.keys():
