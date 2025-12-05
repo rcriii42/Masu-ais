@@ -26,6 +26,7 @@ colors = {'cl': 'black',
           'dig': 'green',
           'disp': 'magenta',
           'track': 'gray'}
+loc_types = ['dig', 'disp']  # These are the section types the dredge can be inside
 
 for fname in glob(os.path.join(project_folder, '*.csv')):
     coord_files.append(fname)
