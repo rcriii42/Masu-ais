@@ -71,6 +71,29 @@ def classify_cycle(ais_gdf, dig_speed=2.5, disp_speed=2.5):
     return ais_gdf
 
 
+def load_ais_data(conn: sqlite3.Connection, mmsi: int, start_ts: float, end_ts: float) -> pd.DataFrame:
+    """Load AIS data between the start and end timestamps
+
+    Adds a date column, sorts by date, and set date as index
+
+    :param conn: Connection to the DB with AIS data
+    :param mmsi: Vessel MMSI number
+    :param start_ts: start timestamp in UTC ms
+    :param end_ts: end timestamp in UTC ms
+
+    :return: Pandas dataframe with AIS data
+    """
+    qry = f"""SELECT * FROM ais_data WHERE utc_timestamp_ms>={start_ts} AND
+                                           utc_timestamp_ms<={end_ts} AND
+                                           mmsi={mmsi};
+           """
+
+    new_df = pd.read_sql(qry, connection)
+    new_df['date'] = new_df.apply(lambda row: datetime.fromtimestamp(row.utc_timestamp_ms / 1000), axis=1)
+    new_df.sort_values(by=['date'], ascending=True, inplace=True)
+    new_df.set_index('date', inplace=True)
+    return new_df
+
 if __name__ == "__main__":
     connection = sqlite3.connect(ais_database)
     cursor = connection.cursor()
@@ -81,17 +104,11 @@ if __name__ == "__main__":
     start_timestamp = start_date.timestamp() * 1000
     end_date = datetime(2025, 10, 22, 23, 59, 59)
     end_timestamp = end_date.timestamp() * 1000
-    qry = f"""SELECT * FROM ais_data WHERE utc_timestamp_ms>={start_timestamp} AND
-                                           utc_timestamp_ms<={end_timestamp} AND
-                                           mmsi={vessel_mmsi};
-           """
 
-    df = pd.read_sql(qry, connection)
+    df = load_ais_data(connection, vessel_mmsi, start_timestamp, end_timestamp)
     df['activity'] = None
-    df['date'] = df.apply(lambda row: datetime.fromtimestamp(row.utc_timestamp_ms/1000), axis=1)
-    df.sort_values(by=['date'], ascending=True, inplace=True)
-    df['duration'] = df['date'].diff()
-    df.set_index('date', inplace=True)
+    df['duration'] = df.index.diff()
+
     gdf = gpd.GeoDataFrame(df,
                            geometry=gpd.points_from_xy(df.longitude, df.latitude), crs="EPSG:4326")
     gdf = classify_delays(gdf)
