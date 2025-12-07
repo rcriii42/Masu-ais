@@ -1,4 +1,7 @@
 """Test drawing lines on maps using geopandas"""
+from datetime import datetime, date
+import os
+import sqlite3
 
 from dash import Dash, dcc, html
 import numpy as np
@@ -6,6 +9,15 @@ import plotly.graph_objects as go
 import shapely.geometry
 
 from channel_def import project_sections, colors
+
+ais_database = os.path.join(os.getcwd(), 'Matsu_AIS.sqlite')
+conn = sqlite3.connect(ais_database)
+cur = conn.cursor()
+
+min_ts, max_ts = cur.execute('SELECT min(utc_timestamp_ms), max(utc_timestamp_ms) FROM ais_data').fetchall()[0]
+first_date = datetime.fromtimestamp(min_ts/1000).date()
+last_date = datetime.fromtimestamp(max_ts/1000).date()
+print(f'Data in DB from {first_date} to {last_date}')
 
 fig = go.Figure()
 for feature_type in colors.keys():
