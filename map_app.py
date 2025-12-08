@@ -15,8 +15,8 @@ conn = sqlite3.connect(ais_database)
 cur = conn.cursor()
 
 min_ts, max_ts = cur.execute('SELECT min(utc_timestamp_ms), max(utc_timestamp_ms) FROM ais_data').fetchall()[0]
-first_date = datetime.fromtimestamp(min_ts/1000).date()
-last_date = datetime.fromtimestamp(max_ts/1000).date()
+first_date = datetime.fromtimestamp(min_ts/1000)
+last_date = datetime.fromtimestamp(max_ts/1000)
 print(f'Data in DB from {first_date} to {last_date}')
 
 fig = go.Figure()
