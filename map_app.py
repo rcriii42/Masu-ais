@@ -1,5 +1,5 @@
 """Test drawing lines on maps using geopandas"""
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import os
 import sqlite3
 
@@ -18,6 +18,24 @@ min_ts, max_ts = cur.execute('SELECT min(utc_timestamp_ms), max(utc_timestamp_ms
 first_date = datetime.fromtimestamp(min_ts/1000)
 last_date = datetime.fromtimestamp(max_ts/1000)
 print(f'Data in DB from {first_date} to {last_date}')
+
+rows = cur.execute('SELECT distinct(mmsi) FROM ais_data').fetchall()
+mmsi_list = [x[0] for x in rows]
+vessel_names = []
+for m in mmsi_list:
+    vn = cur.execute('SELECT vessel_name FROM vessel_data WHERE mmsi = ?', (m, )).fetchall()[0][0]
+    vessel_names.append(vn)
+
+vessel_picker = dcc.Dropdown(vessel_names, vessel_names[0], id='vessel-dropdown')
+
+date_picker = dcc.DatePickerRange(id='my-date-picker-range',
+                                  min_date_allowed=first_date,
+                                  max_date_allowed=last_date,
+                                  # initial_visible_month=date(2025, 6, 2),
+                                  start_date=first_date,
+                                  end_date=first_date + timedelta(days=2)
+                                  )
+
 
 fig = go.Figure()
 for feature_type in colors.keys():
@@ -58,6 +76,6 @@ fig.update_layout(title_text='HSC Maintenance',
                   )
 
 app = Dash()
-app.layout = html.Div([dcc.Graph(figure=fig)])
+app.layout = html.Div([dcc.Graph(figure=fig), vessel_picker, date_picker])
 
 app.run(debug=True, use_reloader=False)
