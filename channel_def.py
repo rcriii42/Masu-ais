@@ -87,5 +87,13 @@ for fname in coord_files:
 print()
 
 project_sections = {}
+combined_gdf = None
 for gtype in geo_inputs.keys():
     project_sections[gtype] = geopandas.GeoDataFrame(geo_inputs[gtype], crs='epsg:2278').to_crs(epsg=4326)
+    if combined_gdf is None:
+        combined_gdf = project_sections[gtype]
+    else:
+        combined_gdf = pandas.concat([combined_gdf, project_sections[gtype]], ignore_index=True)
+
+project_center_NE = combined_gdf.to_crs(crs='epsg:2278').dissolve().centroid
+project_center = geopandas.GeoDataFrame(geometry=project_center_NE, crs='epsg:2278').to_crs(epsg=4326)
