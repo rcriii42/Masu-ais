@@ -54,7 +54,8 @@ def get_vessel_track(conn: sqlite3.Connection, vessel_mmsi: int,
                   'geometry': [shapely.geometry.linestring.LineString(gpd.points_from_xy(df.longitude, df.latitude,
                                                                                          crs="EPSG:4326"))],
                   'color': ['gray'],
-                  'stations': [None]
+                  'stations': [None],
+                  'sog': [df['sog']]
                   }
     gdf = gpd.GeoDataFrame(geo_inputs,
                            geometry=geo_inputs['geometry'],
@@ -101,11 +102,16 @@ def update_map(vessel_mmsi: int, start_date, end_date) -> go.Figure:
                 lats = np.append(lats, y)
                 lons = np.append(lons, x)
                 names = np.append(names, [name]*len(y))
+                if feature_type == 'disable color scale':  # 'track':
+                    marker = {'color': geo_df['sog'],
+                              'colorscale': 'turbo'}
+                else:
+                    marker = None
 
                 traces[name] = s = go.Scattermap(mode="markers+lines",
                                                  lat=lats,
                                                  lon=lons,
-                                                 marker=None,
+                                                 marker=marker,
                                                  name=names[0],
                                                  line=dict(color=colors[feature_type])
                                                  )
