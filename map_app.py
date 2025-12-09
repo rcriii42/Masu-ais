@@ -9,7 +9,7 @@ import numpy as np
 import plotly.graph_objects as go
 import shapely.geometry
 
-from channel_def import project_sections, colors
+from channel_def import project_sections, colors, project_center
 from classify_loads import load_ais_data
 
 ais_database = os.path.join(os.getcwd(), 'Matsu_AIS.sqlite')
@@ -120,7 +120,8 @@ def update_map(vessel_mmsi: int, start_date, end_date) -> go.Figure:
                       showlegend=True,
                       map={'style': 'satellite',
                            'zoom': 10,
-                           'center': {'lat': 29.49854, 'lon': -94.866943}
+                           'center': {'lat': project_center.geometry.y.iloc[0],
+                                      'lon': project_center.geometry.x.iloc[0]},
                            },
                       width=1000,
                       height=1000,
