@@ -1,5 +1,5 @@
 """Test drawing lines on maps using geopandas"""
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 import os
 import sqlite3
 
