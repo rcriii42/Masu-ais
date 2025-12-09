@@ -4,11 +4,13 @@ import os
 import sqlite3
 
 from dash import Dash, dcc, html
+import geopandas as gpd
 import numpy as np
 import plotly.graph_objects as go
 import shapely.geometry
 
 from channel_def import project_sections, colors
+from classify_loads import load_ais_data
 
 ais_database = os.path.join(os.getcwd(), 'Matsu_AIS.sqlite')
 conn = sqlite3.connect(ais_database)
@@ -37,7 +39,31 @@ date_picker = dcc.DatePickerRange(id='my-date-picker-range',
                                   )
 
 
+def get_vessel_track(conn: sqlite3.Connection, vessel_mmsi: int,
+                     start_time: datetime, end_time: datetime) -> gpd.GeoDataFrame:
+    """Return a GeoDataFrame with the track for the given vessel over a timeframe"""
+    start_ts = start_time.timestamp()*1000
+    end_ts = end_time.timestamp()*1000
+    df = load_ais_data(conn, vessel_mmsi, start_ts, end_ts)
+    geo_inputs = {'name': ['dredge_track'],
+                  'coord_file': ["from_DB"],
+                  'geometry': [shapely.geometry.linestring.LineString(gpd.points_from_xy(df.longitude, df.latitude,
+                                                                                        crs="EPSG:4326"))],
+                  'color': ['gray'],
+                  'stations': [None]
+                  }
+    gdf = gpd.GeoDataFrame(geo_inputs,
+                           geometry=geo_inputs['geometry'],
+                           crs="EPSG:4326")
+    return gdf
+
+
 fig = go.Figure()
+traces = dict()
+project_sections['track'] = get_vessel_track(conn,
+                                             368349000,
+                                             datetime(year=2025, month=6, day=2),
+                                             datetime(year=2025, month=6, day=3))
 for feature_type in colors.keys():
     geo_df = project_sections[feature_type]
     for feature, name in zip(geo_df.geometry, geo_df.name):
@@ -56,14 +82,15 @@ for feature_type in colors.keys():
             lons = np.append(lons, x)
             names = np.append(names, [name]*len(y))
 
-            fig.add_trace(go.Scattermap(mode="markers+lines",
-                                        lat=lats,
-                                        lon=lons,
-                                        marker=None,
-                                        name=names[0],
-                                        line=dict(color=colors[feature_type])
-                                        )
-                          )
+            traces[name] = s = go.Scattermap(mode="markers+lines",
+                                             lat=lats,
+                                             lon=lons,
+                                             marker=None,
+                                             name=names[0],
+                                             line=dict(color=colors[feature_type])
+                                             )
+            fig.add_trace(s)
+
 
 fig.update_layout(title_text='HSC Maintenance',
                   showlegend=True,
