@@ -88,11 +88,12 @@ def load_ais_data(conn: sqlite3.Connection, mmsi: int, start_ts: float, end_ts: 
                                            mmsi={mmsi};
            """
 
-    new_df = pd.read_sql(qry, connection)
+    new_df = pd.read_sql(qry, conn)
     new_df['date'] = new_df.apply(lambda row: datetime.fromtimestamp(row.utc_timestamp_ms / 1000), axis=1)
     new_df.sort_values(by=['date'], ascending=True, inplace=True)
     new_df.set_index('date', inplace=True)
     return new_df
+
 
 if __name__ == "__main__":
     connection = sqlite3.connect(ais_database)
