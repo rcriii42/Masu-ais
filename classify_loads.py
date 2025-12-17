@@ -110,22 +110,26 @@ if __name__ == "__main__":
     df['activity'] = None
     df['duration'] = df.index.diff()
 
-    gdf = gpd.GeoDataFrame(df,
-                           geometry=gpd.points_from_xy(df.longitude, df.latitude), crs="EPSG:4326")
-    gdf = classify_delays(gdf)
-    gdf = set_location(gdf,
-                       dict([(k, v) for k, v in project_sections.items() if k in loc_types]))
-    gdf = classify_cycle(gdf)
+    gdf_latlon = gpd.GeoDataFrame(df,
+                                  geometry=gpd.points_from_xy(df.longitude, df.latitude), crs="EPSG:4326")
+    gdf_latlon = classify_delays(gdf_latlon)
+    gdf_latlon = set_location(gdf_latlon,
+                              dict([(k, v) for k, v in project_sections.items() if k in loc_types]))
+    gdf_latlon = classify_cycle(gdf_latlon)
+    gdf_NE = gdf_latlon.to_crs(epsg=2278)
+    xy = gdf_NE.get_coordinates()
+    gdf_latlon['E'] = xy.x
+    gdf_latlon['N'] = xy.y
 
-    print(f'Data between {start_timestamp} and {end_timestamp} is {gdf.shape[0]} rows')
-    print(f'There are {gdf[gdf["activity"]=="delay"]["duration"].sum()} delays')
+    print(f'Data between {start_timestamp} and {end_timestamp} is {gdf_latlon.shape[0]} rows')
+    print(f'There are {gdf_latlon[gdf_latlon["activity"] == "delay"]["duration"].sum()} delays')
     for sec_type in ['dig', 'disp', 'sail']:
         action = {"dig": "digging",
                   "disp": "dumping",
                   "sail": "sailing"}[sec_type]
-        print(f'The dredge spent {gdf[gdf["section"]==sec_type]["duration"].sum()} in the {sec_type} area')
-        print(f'The dredge spent {gdf[gdf["activity"]==sec_type]["duration"].sum()} '
+        print(f'The dredge spent {gdf_latlon[gdf_latlon["section"] == sec_type]["duration"].sum()} in the {sec_type} area')
+        print(f'The dredge spent {gdf_latlon[gdf_latlon["activity"] == sec_type]["duration"].sum()} '
               f'{action}')
-    print(gdf.head())
+    print(gdf_latlon.head())
 
-    gdf.to_csv('ais_data.csv')
+    gdf_latlon.to_csv('ais_data.csv')
