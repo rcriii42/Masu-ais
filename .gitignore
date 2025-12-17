@@ -5,12 +5,9 @@
 *py.cover
 .coverage
 
-/dist
-/build
-/.venv
-
-graphs/
-htmlcov/
+dist/
+build/
+.venv/
 
 .project
 .pydevproject
